@@ -1,38 +1,3 @@
-Skip to content
-Search or jump to…
-Pull requests
-Issues
-Marketplace
-Explore
- 
-@zen37 
-CollActionteam
-/
-collaction_backend
-Public
-Code
-Issues
-2
-Pull requests
-Actions
-Projects
-Wiki
-Security
-Insights
-collaction_backend/.gitignore
-@rubenhorn
-rubenhorn Add secret docs for prod (#27)
-…
-Latest commit f884ef0 on Nov 20
- History
- 4 contributors
-@rubenhorn@gregoflash05@midepeter@zen37
-46 lines (35 sloc)  1.01 KB
-   
-# AWS
-.aws-sam
-samconfig.toml
-
 # from https://github.com/github/gitignore/blob/master/Go.gitignore
 
 # Binaries for programs and plugins
