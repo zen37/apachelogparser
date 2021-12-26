@@ -5,6 +5,9 @@ import (
 	"time"
 )
 
+//const clfTimeLayout string = "02/Jan/2006:15:04:05 -0700"
+//const StandardEnglishFormat string = "02/Jan/2006:15:04:05 -0700"
+
 //position of the log entry
 const (
 	IP = iota
@@ -48,3 +51,5 @@ type CombinedLog struct {
 	Referer   string
 	UserAgent string
 }
+
+type Log interface{}
