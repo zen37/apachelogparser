@@ -1,6 +1,7 @@
 package apachelogparser
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -11,7 +12,14 @@ const (
 	sizeCombinedLog = 12
 )
 
+var (
+	ErrInvalidLog = errors.New("Log record is neither Apache common nor combined log")
+	ErrInvalidIP  = errors.New("IP invalid")
+)
+
 func ParseLogRecord(r string) (*Log, error) {
+
+	var log *Log
 
 	s := strings.Fields(r)
 	l := len(s)
@@ -23,11 +31,16 @@ func ParseLogRecord(r string) (*Log, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		*log = CommonLog{
+			IP: net.ParseIP(s[IP]),
+		}
+
 	default:
-		return nil, fmt.Errorf("Log record is neither Apache common nor combined log")
+		return nil, fmt.Errorf("validate log size, %w", ErrInvalidLog)
 	}
 
-	return nil, nil
+	return log, nil
 
 }
 
@@ -42,7 +55,7 @@ func checkFields(s []string) error {
 func checkIP(v string) error {
 	ip := net.ParseIP(v)
 	if ip == nil {
-		return fmt.Errorf("IP invalid")
+		return fmt.Errorf("validate IP, %w", ErrInvalidIP)
 	}
 	return nil
 }
