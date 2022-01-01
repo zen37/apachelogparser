@@ -52,6 +52,27 @@ func TestParseLogRecord(t *testing.T) {
 			t.Errorf("FAIL: IP not marked as invalid")
 		}
 	}
+
+	tests = []struct {
+		record string
+		log    interface{}
+		err    error
+	}{
+		{"127.0.110.1  - rob 10/Oct/2000:13:55:36 -0700] \"GET /apache_pb.gif HTTP/1.0\" 200 2326", nil, ErrInvalidFieldTimestamp},
+		{"127.0.0.1 - rob [10/Oct/2000:13:55:36 -0700 \"GET /apache_pb.gif HTTP/1.0\" 200 2326", nil, ErrInvalidFieldTimestamp},
+		{"127.255.0.123 - rob &10/Oct/2000:13:55:36 -0700] \"GET /apache_pb.gif HTTP/1.0\" 200 2326", nil, ErrInvalidFieldTimestamp},
+		{"127.1.1.1 - rob [10/Oct/2000:13:55:36 -0700) \"GET /apache_pb.gif HTTP/1.0\" 200 2326", nil, ErrInvalidFieldTimestamp},
+	}
+	t.Log("===========================================")
+	t.Log("Check whether Timestamp field is invalid")
+	t.Log("-------------------------------------------")
+	for _, v := range tests {
+		t.Log("checking ...", v.record)
+		_, err := ParseLogRecord(v.record)
+		if !errors.Is(err, v.err) {
+			t.Errorf("FAIL: Timestmp not marked as invalid")
+		}
+	}
 }
 
 func isNil(v interface{}) bool {

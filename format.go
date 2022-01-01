@@ -51,5 +51,3 @@ type CombinedLog struct {
 	Referer   string
 	UserAgent string
 }
-
-type Log interface{}
