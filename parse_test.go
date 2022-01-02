@@ -64,13 +64,34 @@ func TestParseLogRecord(t *testing.T) {
 		{"127.1.1.1 - rob [10/Oct/2000:13:55:36 -0700) \"GET /apache_pb.gif HTTP/1.0\" 200 2326", nil, ErrInvalidFieldTimestamp},
 	}
 	t.Log("===========================================")
-	t.Log("Check whether Timestamp field is invalid")
+	t.Log("Check whether Timestamp field starts with [ and ends with ]")
 	t.Log("-------------------------------------------")
 	for _, v := range tests {
 		t.Log("checking ...", v.record)
 		_, err := ParseLogRecord(v.record)
 		if !errors.Is(err, v.err) {
-			t.Errorf("FAIL: Timestmp not marked as invalid")
+			t.Errorf("FAIL: Timestamp field not marked as invalid")
+		}
+	}
+
+	tests = []struct {
+		record string
+		log    interface{}
+		err    error
+	}{
+		{"127.0.110.1  - rob [x10/Oct/2000:13:55:36 -0700] \"GET /apache_pb.gif HTTP/1.0\" 200 2326", nil, ErrInvalidTimestamp},
+		{"127.0.0.1 - rob [y10/Dec/2000:13:55:36 -0700] \"GET /apache_pb.gif HTTP/1.0\" 200 2326", nil, ErrInvalidTimestamp},
+		{"127.255.0.123 - rob [10/Oct/2222:13:55:36 -250] \"GET /apache_pb.gif HTTP/1.0\" 200 2326", nil, ErrInvalidTimestamp},
+		{"127.1.1.1 - - [10/Dec/2000:13:55:36 &800] \"GET /apache_pb.gif HTTP/1.0\" 200 2326", nil, ErrInvalidTimestamp},
+	}
+	t.Log("===========================================")
+	t.Log("Check whether Timestamp is invalid")
+	t.Log("-------------------------------------------")
+	for _, v := range tests {
+		t.Log("checking ...", v.record)
+		_, err := ParseLogRecord(v.record)
+		if !errors.Is(err, v.err) {
+			t.Errorf("FAIL: Timestamp not marked as invalid")
 		}
 	}
 }

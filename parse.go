@@ -12,12 +12,14 @@ const (
 	sizeCommonLog         = 10
 	sizeCombinedLog       = 12
 	StandardEnglishFormat = "02/Jan/2006:15:04:05 -0700"
+	separator             = " "
 )
 
 var (
-	ErrInvalidLog            = errors.New("Log record is neither Apache common nor combined log")
+	ErrInvalidLog            = errors.New("log record is neither Apache common nor combined log")
 	ErrInvalidIP             = errors.New("IP invalid")
-	ErrInvalidFieldTimestamp = errors.New("Timestamp field invalid, missing either opening '[' or closing ']' or both")
+	ErrInvalidFieldTimestamp = errors.New("timestamp field invalid, missing either opening '[' or closing ']' or both")
+	ErrInvalidTimestamp      = errors.New("timestamp invalid")
 )
 
 func ParseLogRecord(r string) (interface{}, error) {
@@ -30,7 +32,6 @@ func ParseLogRecord(r string) (interface{}, error) {
 
 	switch l {
 	case sizeCommonLog, sizeCombinedLog:
-
 		log, err = getCommonFields(s)
 		if err != nil {
 			return nil, err
@@ -72,22 +73,23 @@ func ParseLogRecord(r string) (interface{}, error) {
 
 func getCommonFields(s []string) (*CommonLog, error) {
 
-	var log *CommonLog
+	var log CommonLog
 
 	ip, err := getIP(s[IP])
 	if err != nil {
 		return nil, err
 	}
-
-	timestamp, err := getDateTime(s[Timestamp])
+	// second position is the UTC, 10/Oct/2000:13:55:36 -0700
+	timestamp, err := getDateTime(s[Timestamp] + separator + s[Timestamp+1])
 	if err != nil {
 		return nil, err
 	}
 
 	log.IP = ip
+
 	log.Timestamp = timestamp
 
-	return log, nil
+	return &log, nil
 }
 
 func getIP(input string) (net.IP, error) {
@@ -111,7 +113,7 @@ func getDateTime(input string) (timestamp time.Time, err error) {
 		return
 	}
 	if timestamp, err = time.Parse(StandardEnglishFormat, input[1:idx]); err != nil {
-		err = errors.New("failed to parse datetime: " + err.Error())
+		err = fmt.Errorf("parsing time error:[%s] %w", err, ErrInvalidTimestamp)
 	}
 	return
 }
