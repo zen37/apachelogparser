@@ -5,8 +5,7 @@ import (
 	"time"
 )
 
-//const clfTimeLayout string = "02/Jan/2006:15:04:05 -0700"
-//const StandardEnglishFormat string = "02/Jan/2006:15:04:05 -0700"
+const StandardEnglishFormat string = "02/Jan/2006:15:04:05 -0700"
 
 //position of the log entry
 const (
@@ -14,7 +13,10 @@ const (
 	Identity
 	User
 	Timestamp
-	Request
+	TZ
+	Method
+	Resource
+	Protocol
 	Status
 	Size
 	Referer
@@ -28,10 +30,7 @@ type request struct {
 	Protocol string
 }
 
-/*
-LogFormat "%h %l %u %t \"%r\" %>s %b" common
-CustomLog logs/access_log common
-*/
+// LogFormat "%h %l %u %t \"%r\" %>s %b" common
 type CommonLog struct {
 	IP        net.IP
 	Identity  string
@@ -42,10 +41,7 @@ type CommonLog struct {
 	Size      int64
 }
 
-/*
-LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"" combined
-CustomLog log/access_log combined
-*/
+// LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"" combined
 type CombinedLog struct {
 	Common    CommonLog
 	Referer   string

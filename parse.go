@@ -4,15 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	sizeCommonLog         = 10
-	sizeCombinedLog       = 12
-	StandardEnglishFormat = "02/Jan/2006:15:04:05 -0700"
-	separator             = " "
+	sizeCommonLog   = 10
+	sizeCombinedLog = 12
+	separator       = " "
 )
 
 var (
@@ -20,6 +20,8 @@ var (
 	ErrInvalidIP             = errors.New("IP invalid")
 	ErrInvalidFieldTimestamp = errors.New("timestamp field invalid, missing either opening '[' or closing ']' or both")
 	ErrInvalidTimestamp      = errors.New("timestamp invalid")
+	ErrInvalidStatus         = errors.New("status invalid")
+	ErrInvalidSize           = errors.New("size invalid")
 )
 
 func ParseLogRecord(r string) (interface{}, error) {
@@ -31,6 +33,7 @@ func ParseLogRecord(r string) (interface{}, error) {
 	l := len(s)
 
 	switch l {
+
 	case sizeCommonLog, sizeCombinedLog:
 		log, err = getCommonFields(s)
 		if err != nil {
@@ -80,14 +83,30 @@ func getCommonFields(s []string) (*CommonLog, error) {
 		return nil, err
 	}
 	// second position is the UTC, 10/Oct/2000:13:55:36 -0700
-	timestamp, err := getDateTime(s[Timestamp] + separator + s[Timestamp+1])
+	timestamp, err := getDateTime(s[Timestamp] + separator + s[TZ])
+	if err != nil {
+		return nil, err
+	}
+	status, err := getStatus(s[Status])
+	if err != nil {
+		return nil, err
+	}
+
+	size, err := getSize(s[Size])
 	if err != nil {
 		return nil, err
 	}
 
 	log.IP = ip
-
+	log.Identity = s[Identity]
+	log.User = s[User]
 	log.Timestamp = timestamp
+
+	r := request{s[Method], s[Resource], s[Protocol]}
+	log.Request = r
+
+	log.Status = status
+	log.Size = size
 
 	return &log, nil
 }
@@ -116,4 +135,22 @@ func getDateTime(input string) (timestamp time.Time, err error) {
 		err = fmt.Errorf("parsing time error:[%s] %w", err, ErrInvalidTimestamp)
 	}
 	return
+}
+
+func getStatus(input string) (int, error) {
+	i, err := strconv.Atoi(input)
+	if err != nil {
+		err = fmt.Errorf("parsing time error:[%s] %w", err, ErrInvalidStatus)
+		return 0, err
+	}
+	return i, nil
+}
+
+func getSize(input string) (int64, error) {
+	i, err := strconv.ParseInt(input, 10, 64)
+	if err != nil {
+		err = fmt.Errorf("parsing time error:[%s] %w", err, ErrInvalidSize)
+		return 0, err
+	}
+	return i, nil
 }
