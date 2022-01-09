@@ -3,6 +3,7 @@ package apachelogparser
 import (
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -137,6 +138,68 @@ func TestParseLogRecord(t *testing.T) {
 		if !errors.Is(err, v.err) {
 			t.Errorf("FAIL: Size not marked as invalid")
 		}
+	}
+
+	testCommonLog := []struct {
+		record    []string
+		IP        string
+		Identity  string
+		User      string
+		Timestamp string
+		Request   request
+		Status    int
+		Size      int64
+		err       error
+	}{
+		{[]string{"127.0.0.1", "-", "rob", "[10/Oct/2000:13:55:36 -0700]", "GET /apache_pb.gif HTTP/1.0", "200", "2326"},
+			"127.0.0.1", "-", "rob", "2000-10-10 13:55:36 -0700 PDT", request{"GET", "/apache_pb.gif", "HTTP/1.0"}, 200, 2326, nil},
+		{[]string{"154.53.43.164", "-", "-", "[23/Dec/2021:14:41:47 -0600]", "GET /new/installer.php HTTP/1.1", "301", "707"},
+			"154.53.43.164", "-", "-", "2021-12-23 14:41:47 -0600 -0600", request{"GET", "/new/installer.php", "HTTP/1.1"}, 301, 707, nil},
+	}
+	t.Log("===========================================")
+	t.Log("Check Common Log")
+	t.Log("-------------------------------------------")
+	for _, v := range testCommonLog {
+		t.Log("checking ...", v.record)
+		log, err := ParseLogRecord(strings.Join(v.record, " "))
+		if !errors.Is(err, v.err) {
+			t.Errorf("FAIL: Error is not nil")
+			return
+		}
+		if log == nil {
+			t.Errorf("FAIL: log not returned")
+			return
+		}
+
+		l := log.(*CommonLog)
+
+		g, w := string(l.IP.String()), v.IP
+		compareGotWant(t, "IP", g, w)
+
+		g, w = l.Identity, v.Identity
+		compareGotWant(t, "Identity", g, w)
+
+		g, w = l.User, v.User
+		compareGotWant(t, "User", g, w)
+
+		g, w = string(l.Timestamp.String()), v.Timestamp
+		compareGotWant(t, "Timestamp", g, w)
+
+		g_struct, w_struct := l.Request, v.Request
+		compareGotWant(t, "Request", g_struct, w_struct)
+
+		g_int, w_int := l.Status, v.Status
+		compareGotWant(t, "Status", g_int, w_int)
+
+		g_int64, w_int64 := l.Size, v.Size
+		compareGotWant(t, "Size", g_int64, w_int64)
+
+	}
+}
+
+func compareGotWant(t *testing.T, f string, g interface{}, w interface{}) {
+	if g != w {
+		t.Errorf("FAIL: correct %v not returned, got: %v, want: %v", f, g, w)
 	}
 }
 
