@@ -11,7 +11,7 @@ import (
 
 const (
 	sizeCommonLog   = 10
-	sizeCombinedLog = 12
+	sizeCombinedLog = 6
 	separator       = " "
 )
 
@@ -26,46 +26,25 @@ var (
 
 func ParseLogRecord(r string) (interface{}, error) {
 
-	var log *CommonLog
+	var log interface{}
 	var err error
 
 	s := strings.Fields(r)
-	l := len(s)
 
-	switch l {
-
-	case sizeCommonLog, sizeCombinedLog:
+	switch {
+	case len(s) == sizeCommonLog:
+		//we deal with Common Log Format
 		log, err = getCommonFields(s)
 		if err != nil {
 			return nil, err
 		}
-
-	/* case sizeCommonLog:
-
-		*log = CommonLog{
-			IP:        net.ParseIP(s[IP]),
-			User:      s[User],
-			Identity:  s[Identity],
-			Timestamp: s[Timestamp],
-			Request:   s[Request],
-			Status:    s[Status],
-			Size:      s[Size],
+	case len(strings.Split(r, "\"")) == sizeCombinedLog:
+		//we deal with Combined Log Format
+		//log, err = getCombinedFields(strings.Split(r, "\""))
+		log, err = getCombinedFields(s)
+		if err != nil {
+			return nil, err
 		}
-
-	case sizeCombinedLog:
-
-		*log = CommonLog{
-			IP:        net.ParseIP(s[IP]),
-			User:      s[User],
-			Identity:  s[Identity],
-			Timestamp: s[Timestamp],
-			Request:   s[Request],
-			Status:    s[Status],
-			Size:      s[Size],
-			Referer:   s[Request],
-			UserAgent: s[UserAgent],
-		}
-	*/
 	default:
 		return nil, fmt.Errorf("validate log size, %w", ErrInvalidLog)
 	}
@@ -108,7 +87,28 @@ func getCommonFields(s []string) (*CommonLog, error) {
 	log.Status = status
 	log.Size = size
 
+	//fmt.Println("getCommonFields: ", &log, "error:", err)
+
 	return &log, nil
+}
+
+func getCombinedFields(s []string) (*CombinedLog, error) {
+
+	logCombined := new(CombinedLog)
+
+	logCommon, err := getCommonFields(s[:sizeCommonLog])
+	if err != nil {
+		return nil, err
+	}
+	if logCommon == nil {
+		return nil, nil
+	}
+	logCombined.Common = *logCommon
+	logCombined.Referer = s[Referer]
+	logCombined.UserAgent = s[UserAgent]
+
+	return logCombined, nil
+
 }
 
 func getIP(input string) (net.IP, error) {
