@@ -5,7 +5,12 @@ import (
 	"time"
 )
 
-const StandardEnglishFormat string = "02/Jan/2006:15:04:05 -0700"
+const (
+	StandardEnglishFormat string = "02/Jan/2006:15:04:05 -0700"
+	sizeCommonLog                = 10
+	sizeCombinedLog              = 7
+	separator                    = " "
+)
 
 //position of the log entry
 const (
