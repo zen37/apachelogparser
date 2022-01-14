@@ -140,7 +140,14 @@ func TestParseLogRecord(t *testing.T) {
 		}
 	}
 
-	testCommonLog := []struct {
+	testCommonLog(t)
+
+	testCombinedLog(t)
+
+}
+
+func testCommonLog(t *testing.T) {
+	tests := []struct {
 		record    []string
 		IP        string
 		Identity  string
@@ -159,7 +166,7 @@ func TestParseLogRecord(t *testing.T) {
 	t.Log("===========================================")
 	t.Log("Check Common Log")
 	t.Log("-------------------------------------------")
-	for _, v := range testCommonLog {
+	for _, v := range tests {
 		t.Log("checking ...", v.record)
 		log, err := ParseLogRecord(strings.Join(v.record, " "))
 		if !errors.Is(err, v.err) {
@@ -192,6 +199,69 @@ func TestParseLogRecord(t *testing.T) {
 		compareGotWant(t, "Status", g_int, w_int)
 
 		g_int64, w_int64 := l.Size, v.Size
+		compareGotWant(t, "Size", g_int64, w_int64)
+
+	}
+}
+
+func testCombinedLog(t *testing.T) {
+	tests := []struct {
+		record    []string
+		IP        string
+		Identity  string
+		User      string
+		Timestamp string
+		Request   request
+		Status    int
+		Size      int64
+		Referer   string
+		UserAgent string
+		err       error
+	}{
+		//{[]string{"127.0.0.1", "-", "rob", "[10/Oct/2000:13:55:36 -0700]", "GET /apache_pb.gif HTTP/1.0", "200", "2326"},
+		{[]string{"154.53.43.164", "-", "-", "[23/Dec/2021:14:41:34 -0600]", "\"GET /apache_pb.gif HTTP/1.0\"", "301", "707", "\"http://localhost/\"", "\"curl/7.68.0\""},
+			"154.53.43.164", "-", "-", "2021-12-23 14:41:34 -0600 -0600", request{"GET", "/apache_pb.gif", "HTTP/1.0"}, 301, 707, "http://localhost/", "curl/7.68.0", nil},
+		{[]string{"154.53.43.164", "-", "-", "[23/Dec/2021:14:42:03 -0600]", "\"GET /index.php/Back/installer.php HTTP/2\"", "404", "474", "\"-\"", "\"curl/7.68.0\""},
+			"154.53.43.164", "-", "-", "2021-12-23 14:42:03 -0600 -0600", request{"GET", "/index.php/Back/installer.php", "HTTP/2"}, 404, 474, "-", "curl/7.68.0", nil},
+		{[]string{"64.180.189.161", "-", "-", "[12/Dec/2022:18:41:08 -0600]", "\"GET /cpsess6383042128/3rdparty/phpMyAdmin/themes/pmahomme/img/col_pointer.png HTTP/2\"", "200", "102", "\"https://cpanel.findaroommate.com/cpsess6383042128/3rdparty/phpMyAdmin/phpmyadmin.css.php?nocache=6470895733ltr&server=1\"", "\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36\""},
+			"64.180.189.161", "-", "-", "2022-12-12 18:41:08 -0600 -0600", request{"GET", "/cpsess6383042128/3rdparty/phpMyAdmin/themes/pmahomme/img/col_pointer.png", "HTTP/2"}, 200, 102, "https://cpanel.findaroommate.com/cpsess6383042128/3rdparty/phpMyAdmin/phpmyadmin.css.php?nocache=6470895733ltr&server=1", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36", nil},
+	}
+	t.Log("===========================================")
+	t.Log("Check Combined Log")
+	t.Log("-------------------------------------------")
+	for _, v := range tests {
+		t.Log("checking ...", v.record)
+		log, err := ParseLogRecord(strings.Join(v.record, " "))
+		if !errors.Is(err, v.err) {
+			t.Errorf("FAIL: Error is not nil, got: %v, want: %v", err, v.err)
+			return
+		}
+		if log == nil {
+			t.Errorf("FAIL: log not returned")
+			return
+		}
+
+		l := log.(*CombinedLog)
+
+		g, w := string(l.Common.IP.String()), v.IP
+		compareGotWant(t, "IP", g, w)
+
+		g, w = l.Common.Identity, v.Identity
+		compareGotWant(t, "Identity", g, w)
+
+		g, w = l.Common.User, v.User
+		compareGotWant(t, "User", g, w)
+
+		g, w = string(l.Common.Timestamp.String()), v.Timestamp
+		compareGotWant(t, "Timestamp", g, w)
+
+		g_struct, w_struct := l.Common.Request, v.Request
+		compareGotWant(t, "Request", g_struct, w_struct)
+
+		g_int, w_int := l.Common.Status, v.Status
+		compareGotWant(t, "Status", g_int, w_int)
+
+		g_int64, w_int64 := l.Common.Size, v.Size
 		compareGotWant(t, "Size", g_int64, w_int64)
 
 	}

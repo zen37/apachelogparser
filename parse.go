@@ -9,12 +9,6 @@ import (
 	"time"
 )
 
-const (
-	sizeCommonLog   = 10
-	sizeCombinedLog = 6
-	separator       = " "
-)
-
 var (
 	ErrInvalidLog            = errors.New("log record is neither Apache common nor combined log")
 	ErrInvalidIP             = errors.New("IP invalid")
@@ -81,13 +75,11 @@ func getCommonFields(s []string) (*CommonLog, error) {
 	log.User = s[User]
 	log.Timestamp = timestamp
 
-	r := request{s[Method], s[Resource], s[Protocol]}
+	r := request{strings.Trim(s[Method], "\""), s[Resource], strings.Trim(s[Protocol], "\"")}
 	log.Request = r
 
 	log.Status = status
 	log.Size = size
-
-	//fmt.Println("getCommonFields: ", &log, "error:", err)
 
 	return &log, nil
 }
