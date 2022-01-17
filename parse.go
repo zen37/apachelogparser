@@ -132,8 +132,7 @@ func getDateTime(input string) (timestamp time.Time, err error) {
 func getStatus(input string) (int, error) {
 	i, err := strconv.Atoi(input)
 	if err != nil {
-		err = fmt.Errorf("parsing time error:[%s] %w", err, ErrInvalidStatus)
-		return 0, err
+		return 0, fmt.Errorf("parsing time error:[%s] %w", err, ErrInvalidStatus)
 	}
 	return i, nil
 }
@@ -141,8 +140,7 @@ func getStatus(input string) (int, error) {
 func getSize(input string) (int64, error) {
 	i, err := strconv.ParseInt(input, 10, 64)
 	if err != nil {
-		err = fmt.Errorf("parsing time error:[%s] %w", err, ErrInvalidSize)
-		return 0, err
+		return 0, fmt.Errorf("parsing time error:[%s] %w", err, ErrInvalidSize)
 	}
 	return i, nil
 }
